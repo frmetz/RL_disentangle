@@ -102,6 +102,7 @@ def get_action_4q(
     Returns: Sequence[numpy.ndarray, int, int]
         Gate U_{ij} to be applied, i, j
     """
+    rdms = np.asarray(rdms)
     assert rdms.shape[0] in (6, 10, 15)
     L = {6:4, 10:5, 15:6}[rdms.shape[0]]    # index dictionary with num of RDMs
 
@@ -229,12 +230,15 @@ def peek_next_4q(state :np.ndarray, U :np.ndarray, i :int, j :int) -> Tuple[np.n
         raise ValueError("Expected either 4, 5 or 6 qubit systems state vector.")
 
     tshape = (2,) * L       # Tensor-like shape
-    psi = state.reshape(tshape)
+    # psi = state.reshape(tshape)
+    psi = state.reshape(tshape).transpose(tuple(range(L)[::-1]))
     P = (i, j) + tuple(k for k in range(L) if k not in (i, j))
     psi = np.transpose(psi, P)
 
+    U = U.reshape(2,2,2,2).transpose(1,0,3,2).reshape(4,4) #######
     phi = U @ psi.reshape(4, -1)
-    phi = np.transpose(phi.reshape(tshape), np.argsort(P))
+    phi = np.transpose(phi.reshape(tshape), np.argsort(P)).transpose(tuple(range(L)[::-1])) ##########
+    # phi = np.transpose(phi.reshape(tshape), np.argsort(P))
 
     ent = get_entanglements(phi)
     done = np.all(ent < 1e-3)
