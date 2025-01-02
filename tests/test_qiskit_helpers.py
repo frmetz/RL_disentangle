@@ -6,7 +6,7 @@ from typing import Literal
 sys.path.append('..')
 from src.quantum_env import QuantumEnv, rdm_2q_half
 from src.quantum_state import phase_norm
-from qiskit.helpers import *
+from qsimh.helpers import *
 
 np.random.seed(44)
 np.set_printoptions(precision=6, suppress=True)
@@ -96,7 +96,7 @@ def test_get_postswap_gate(n_tests=100, verbose=False):
                 print('\nAction:\n', (i, j))
                 print('\nEntanglements before U:\n', get_entanglements(psi))
                 U = get_U(rdms6, i, j, apply_preswap=True, apply_postswap=True)
-                _, ent, _ = peek_next_4q(psi, U, i, j)
+                _, ent, _ = peek_next(psi, U, i, j)
                 print('\nEntanglements after U (qiskit):\n', ent)
                 print('\nEntanglements after U (RL env):\n',
                       get_entanglements(env.simulator.states[0]))
@@ -163,7 +163,7 @@ def test_peek_next_4q(n_tests=100, verbose=False):
             U = get_U(observe_rdms(psi), i, j, True, True)
             phi = env.simulator.states[0]
             ent = get_entanglements(phi)
-            phi2, ent2, _ = peek_next_4q(psi, U, i, j)
+            phi2, ent2, _ = peek_next(psi, U, i, j)
             res = np.isclose(fidelity(phi, phi2), 1.0, atol=1e-2)
             res &= np.all(np.isclose(ent, ent2, atol=1e-5))
             failed += int(not res)
@@ -185,8 +185,8 @@ def test_rdms_noise(policy: Literal['universal', 'transformer'], state):
                 np.random.normal(scale=noise, size=rdms.shape) + \
                 1j * np.random.normal(scale=noise, size=rdms.shape)
             noisy_rdms = noisy_rdms.astype(np.complex64)
-            U, i, j = get_action_4q(noisy_rdms, policy)
-            s, ent, _ = peek_next_4q(s, U, i, j)
+            U, i, j = get_action(noisy_rdms, policy)
+            s, ent, _ = peek_next(s, U, i, j)
             done = np.all(ent < 1e-3)
             # Break loop early if policy != 'universal'
             if policy != 'universal' and done:
@@ -214,11 +214,11 @@ def do_qiskit_rollout(state, max_steps=10):
         RDMs.append(rdms)
         entanglements.append(get_entanglements(s))
 
-        U, i, j = get_action_4q(rdms, "transformer")
+        U, i, j = get_action(rdms, "transformer")
         preswaps.append(np.all(get_preswap_gate(rdms, i, j) == P))
         postswaps.append(np.all(get_postswap_gate(rdms, i, j) == P))
         a = get_action_index_from_ij(rdms, i, j)
-        s_next, ent, _ = peek_next_4q(s, U, i, j)
+        s_next, ent, _ = peek_next(s, U, i, j)
         done = np.all(ent < 1e-3)
         # states in RL environemnt are phase normed
         s = phase_norm(s_next.reshape(tshape)).ravel()

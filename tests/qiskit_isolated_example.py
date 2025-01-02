@@ -6,7 +6,7 @@ import sys
 dirname = os.path.dirname(os.path.realpath(__file__))
 project_root = os.path.realpath(os.path.join(dirname, os.path.pardir))
 sys.path.append(project_root)
-from qiskit.helpers import *
+from qsimh.helpers import *
 from tests.test_qiskit_helpers import *
 
 

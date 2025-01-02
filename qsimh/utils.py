@@ -1,7 +1,7 @@
 import numpy as np
 from qiskit.quantum_info import state_fidelity, partial_trace, Statevector, entropy
 from qiskit_experiments.library import StateTomography
-from helpers import *
+from .helpers import get_action
 
 def get_rdms_via_tomography(data, qc, n_shots):
     """
@@ -59,7 +59,7 @@ def get_next_unitary(data, qc, n_shots):
         tuple: A tuple containing the next unitary operation (U) and the list of qubit indices [i, j] where the unitary acts on.
     """
     rdms = get_rdms_via_tomography(data.copy(), qc.copy(), n_shots)
-    U, i, j = get_action_4q(rdms, policy='transformer')
+    U, i, j = get_action(rdms, policy='transformer')
     return U, [i, j]
 
 def get_exact_two_qubit_rdms(qc):
