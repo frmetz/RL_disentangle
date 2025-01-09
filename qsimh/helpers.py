@@ -1,10 +1,13 @@
 """ Helper functions for disentanglement of 4-qubit systems."""
+import json
 import os
 from itertools import cycle, permutations, combinations
 from typing import Sequence, Tuple, Literal
 
 import numpy as np
 import torch
+
+from . import networks
 
 
 # Circuit for 4 qubits
@@ -47,12 +50,26 @@ def get_ij_from_action_index(a, L):
         raise ValueError('Actions are defined only for 4,5,6 qubit systems. ' \
                          'Expected `L` to be one of (4, 5, 6).')
 
-def load_policy(path):
-    agent = torch.load(path, map_location='cpu', weights_only=False)
-    for enc in agent.policy_network.net:
-        enc.activation_relu_or_gelu = 1
-    agent.policy_network.eval()
-    return agent.policy_network
+def load_policy(which="4q"):
+    thisdir = os.path.dirname(__file__)
+
+    # This file holds configuration info for our agents
+    with open(os.path.join(thisdir, "agents/init.json"), mode="r") as f:
+        aconf = json.load(f)
+
+    # Get class definition from `networks` module
+    _class_ = getattr(networks, aconf[which]["classname"])
+    # Create instance with arguments specified in `aconf`
+    net = _class_(**aconf[which]["arguments"])
+    # Load trained parameters
+    statedict = torch.load(
+        os.path.join(thisdir, f"agents/policy-{which}-statedict.torch"),
+        map_location="cpu",
+        weights_only=True
+    )
+    net.load_state_dict(statedict)
+    net.eval()
+    return net
 
 @torch.no_grad()
 def eval_policy(inputs, policy):
@@ -70,9 +87,9 @@ def eval_policy(inputs, policy):
 # Policies with transformer network + constrain that preserves the order
 # of entanglements, i.e if S_i < S_j then S_i' < S_j' and vice versa, where
 # S are the entanglements before applying action, S' after action.
-POLICY_4Q = load_policy(os.path.join(os.path.dirname(__file__), "agents/4q-agent.pt"))
-POLICY_5Q = load_policy(os.path.join(os.path.dirname(__file__), "agents/5q-agent.pt"))
-POLICY_6Q = load_policy(os.path.join(os.path.dirname(__file__), "agents/6q-agent.pt"))
+POLICY_4Q = load_policy("4q")
+POLICY_5Q = load_policy("5q")
+POLICY_6Q = load_policy("6q")
 
 
 def get_action(
