@@ -47,7 +47,8 @@ def get_rdms_via_tomography(data, qc, n_shots):
         rdms.append(qst.analysis._fit_state_results(fitter, outcome_data, shot_data, measurement_data, preparation_data, False, **fitter_kwargs)[0].value.data)
     return rdms
 
-def get_next_unitary(data, qc, n_shots):
+# def get_next_unitary(data, qc, n_shots):
+def get_next_unitary(rdms, idx=None):
     """
     Generate the next unitary obtained by the RL agent based on the given data and quantum circuit.
 
@@ -59,8 +60,9 @@ def get_next_unitary(data, qc, n_shots):
     Returns:
         tuple: A tuple containing the next unitary operation (U) and the list of qubit indices [i, j] where the unitary acts on.
     """
-    rdms = get_rdms_via_tomography(data.copy(), copy.deepcopy(qc), n_shots)
-    U, i, j = get_action(rdms, policy='transformer')
+    # rdms = get_rdms_via_tomography(data.copy(), copy.deepcopy(qc), n_shots)
+    # print("hsdfsallo")
+    U, i, j = get_action(rdms, policy='transformer', idx=idx)
     return U, [i, j]
 
 def get_exact_two_qubit_rdms(qc):
